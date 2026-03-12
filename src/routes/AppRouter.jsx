@@ -17,31 +17,41 @@ function ProtectedRoute({ children }) {
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <PageWrapper>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/jobs" element={<JobsPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/results"
-            element={
-              <ProtectedRoute>
-                <MatchResultsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </PageWrapper>
+      <Routes>
+        {/* Landing page has its own nav + footer */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* All other pages use shared layout */}
+        <Route
+          path="*"
+          element={
+            <PageWrapper>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/jobs" element={<JobsPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/results"
+                  element={
+                    <ProtectedRoute>
+                      <MatchResultsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </PageWrapper>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }
