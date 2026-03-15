@@ -1,16 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
-import PageWrapper from "../components/layout/PageWrapper";
 import LandingPage from "../pages/LandingPage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import DashboardPage from "../pages/DashboardPage";
-import MatchResultsPage from "../pages/MatchResultsPage";
-import JobsPage from "../pages/JobsPage";
+import DashboardLayout from "../components/layout/DashboardLayout";
+import DashHomePage from "../pages/dashboard/DashHomePage";
+import DashUploadPage from "../pages/dashboard/DashUploadPage";
+import DashMatchesPage from "../pages/dashboard/DashMatchesPage";
+import DashJobsPage from "../pages/dashboard/DashJobsPage";
+import DashJobDetailPage from "../pages/dashboard/DashJobDetailPage";
+import DashProfilePage from "../pages/dashboard/DashProfilePage";
+import DashApplicationsPage from "../pages/dashboard/DashApplicationsPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 function ProtectedRoute({ children }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const token = useAuthStore((s) => s.token);
+  if (!token) return <Navigate to="/login" replace />;
   return children;
 }
 
@@ -18,39 +23,34 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing page has its own nav + footer */}
+        {/* Landing page — own layout */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* All other pages use shared layout */}
+        {/* Auth pages — own layout (two-panel) */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        {/* Dashboard — sidebar layout with nested pages */}
         <Route
-          path="*"
+          path="/dashboard"
           element={
-            <PageWrapper>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/jobs" element={<JobsPage />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/results"
-                  element={
-                    <ProtectedRoute>
-                      <MatchResultsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </PageWrapper>
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<DashHomePage />} />
+          <Route path="upload" element={<DashUploadPage />} />
+          <Route path="matches" element={<DashMatchesPage />} />
+          <Route path="jobs" element={<DashJobsPage />} />
+          <Route path="jobs/:jobId" element={<DashJobDetailPage />} />
+          <Route path="profile" element={<DashProfilePage />} />
+          <Route path="applications" element={<DashApplicationsPage />} />
+        </Route>
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

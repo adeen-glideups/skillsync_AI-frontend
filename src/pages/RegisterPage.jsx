@@ -1,69 +1,316 @@
-import { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
-import { Link } from "react-router-dom";
+import { useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useAuthStore from "../store/authStore";
+import { signup, requestOtp, verifyOtp } from "../api/auth.api";
+import "../styles/auth.css";
 
 export default function RegisterPage() {
-  const { register } = useAuth();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { setAuth } = useAuthStore();
+  const toastRef = useRef(null);
+  const fileRef = useRef(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const [currentStep, setCurrentStep] = useState(1);
+  const [state, setState] = useState({ name: "", email: "", password: "", gender: "", profileImage: null });
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
+  function toast(msg, type = "default") {
+    const container = toastRef.current;
+    if (!container) return;
+    const el = document.createElement("div");
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  function goPanel(n) { setCurrentStep(n); }
+
+  function goStep2() {
+    const errs = {};
+    if (!state.name.trim()) errs.name = true;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) errs.email = true;
+    if (state.password.length < 8) errs.password = true;
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    goPanel(2);
+  }
+
+  function handleAvatar(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast("Image too large. Max 2MB.", "error"); return; }
+    setState({ ...state, profileImage: file });
+    const reader = new FileReader();
+    reader.onload = (ev) => setAvatarPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function submitSignup() {
+    if (!state.gender) { setErrors({ gender: true }); return; }
+    setErrors({});
     setLoading(true);
+
     try {
-      await register(form);
+      const formData = new FormData();
+      formData.append("name", state.name.trim());
+      formData.append("email", state.email.trim());
+      formData.append("password", state.password);
+      formData.append("gender", state.gender);
+      if (state.profileImage) formData.append("profileImage", state.profileImage);
+
+      const { data } = await signup(formData);
+      const payload = data.data || data;
+
+      if (payload?.accessToken) {
+        localStorage.setItem("accessToken", payload.accessToken);
+        localStorage.setItem("refreshToken", payload.refreshToken);
+        localStorage.setItem("user", JSON.stringify(payload.user || {}));
+      }
+
+      await requestOtp(state.email.trim(), "VERIFYEMAIL");
+
+      goPanel(3);
+      setTimeout(() => {
+        const inputs = document.querySelectorAll(".otp-input");
+        if (inputs[0]) inputs[0].focus();
+      }, 100);
     } catch (err) {
-      setError(err.response?.data?.message ?? "Registration failed");
+      const data = err.response?.data;
+      toast((data && typeof data === "object" && data.message) ? data.message : "Signup failed", "error");
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  function initOtp(e, index) {
+    const inputs = document.querySelectorAll(".otp-input");
+    if (e.target.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
+  }
+
+  function handleOtpKeyDown(e, index) {
+    const inputs = document.querySelectorAll(".otp-input");
+    if (e.key === "Backspace" && !e.target.value && index > 0) inputs[index - 1].focus();
+  }
+
+  async function handleVerifyOtp() {
+    const otp = [...document.querySelectorAll(".otp-input")].map((i) => i.value).join("");
+    if (otp.length < 6) { toast("Enter all 6 digits", "error"); return; }
+
+    setLoading(true);
+    try {
+      const { data } = await verifyOtp({ email: state.email.trim(), otp, purpose: "VERIFYEMAIL" });
+      const payload = data.data || data;
+
+      if (payload?.accessToken) {
+        localStorage.setItem("accessToken", payload.accessToken);
+        localStorage.setItem("refreshToken", payload.refreshToken);
+        const user = payload.user || {};
+        localStorage.setItem("user", JSON.stringify(user));
+        setAuth(user, payload.accessToken);
+      } else {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const token = localStorage.getItem("accessToken");
+        if (user && token) setAuth(user, token);
+      }
+
+      goPanel("success");
+      setTimeout(() => navigate("/dashboard"), 2000);
+    } catch (err) {
+      const data = err.response?.data;
+      toast((data && typeof data === "object" && data.message) ? data.message : "Invalid OTP", "error");
+      setLoading(false);
+    }
+  }
+
+  async function resendOtp() {
+    try {
+      await requestOtp(state.email.trim(), "VERIFYEMAIL");
+      toast("New code sent!", "success");
+    } catch { toast("Failed to resend", "error"); }
+  }
+
+  const stepItems = [
+    { num: 1, name: "Your details", desc: "Name, email, password" },
+    { num: 2, name: "Profile setup", desc: "Gender & photo" },
+    { num: 3, name: "Verify email", desc: "6-digit OTP" },
+  ];
+  const progressPct = { 1: 33, 2: 66, 3: 100 };
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <Card className="w-full max-w-md">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Create Account</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
-            label="Name"
-            placeholder="John Doe"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-          />
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-          />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Sign Up"}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Log in
-          </Link>
-        </p>
-      </Card>
+    <div className="auth-page">
+      <div className="toast-container" ref={toastRef}></div>
+
+      <aside className="auth-left signup-left">
+        <div className="left-logo">
+          <div className="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <span className="logo-name">SkillSync AI</span>
+        </div>
+
+        <div className="left-steps">
+          <p className="steps-label">Account setup</p>
+          <div className="step-list">
+            {stepItems.map((s) => (
+              <div key={s.num} className={`step-item ${currentStep === s.num ? "active" : ""} ${typeof currentStep === "number" && s.num < currentStep ? "done" : ""}`}>
+                <div className="step-dot">{s.num}</div>
+                <div className="step-content">
+                  <div className="step-name">{s.name}</div>
+                  <div className="step-desc">{s.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="left-footer">&copy; 2025 SkillSync AI &middot; Free to use</div>
+      </aside>
+
+      <main className="auth-right">
+        <div className="auth-form-box">
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progressPct[currentStep] || 100}%` }}></div>
+          </div>
+
+          {/* STEP 1 */}
+          <div className={`step-panel ${currentStep === 1 ? "active" : ""}`}>
+            <div className="form-header signup-header">
+              <h1 className="form-title">Create account</h1>
+              <p className="form-sub">Already have one? <Link to="/login">Sign in</Link></p>
+            </div>
+
+            <button className="google-btn" onClick={() => toast("Google sign-in coming soon!")}>
+              <img src="https://www.google.com/favicon.ico" alt="Google" />
+              Continue with Google
+            </button>
+            <div className="auth-divider"><span>or with email</span></div>
+
+            <div className="auth-input-group">
+              <label className="auth-input-label">Full name</label>
+              <div className="auth-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                <input className="auth-input" type="text" placeholder="Ali Hassan" autoComplete="name" value={state.name} onChange={(e) => setState({ ...state, name: e.target.value })} />
+              </div>
+              <span className={`field-error ${errors.name ? "show" : ""}`}>Name is required.</span>
+            </div>
+
+            <div className="auth-input-group">
+              <label className="auth-input-label">Email address</label>
+              <div className="auth-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
+                <input className="auth-input" type="email" placeholder="you@example.com" autoComplete="email" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} />
+              </div>
+              <span className={`field-error ${errors.email ? "show" : ""}`}>Enter a valid email.</span>
+            </div>
+
+            <div className="auth-input-group">
+              <label className="auth-input-label">Password</label>
+              <div className="auth-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                <input className="auth-input" type={showPw ? "text" : "password"} placeholder="Min. 8 characters" autoComplete="new-password" value={state.password} onChange={(e) => setState({ ...state, password: e.target.value })} style={{ paddingRight: 44 }} />
+                <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {showPw ? (
+                      <>
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
+              <span className={`field-error ${errors.password ? "show" : ""}`}>Min. 8 characters required.</span>
+            </div>
+
+            <button className="auth-btn auth-btn-dark" onClick={goStep2}>Continue &rarr;</button>
+          </div>
+
+          {/* STEP 2 */}
+          <div className={`step-panel ${currentStep === 2 ? "active" : ""}`}>
+            <div className="form-header signup-header">
+              <h1 className="form-title">Your profile</h1>
+              <p className="form-sub">Help us personalise your experience</p>
+            </div>
+
+            <div className="auth-input-group">
+              <label className="auth-input-label">Gender</label>
+              <div className="gender-group">
+                {["male", "female", "other"].map((g) => (
+                  <div className="gender-opt" key={g}>
+                    <input type="radio" name="gender" id={g} value={g} checked={state.gender === g} onChange={() => setState({ ...state, gender: g })} />
+                    <label htmlFor={g}>{g === "male" ? "\u2642 Male" : g === "female" ? "\u2640 Female" : "\u25CE Other"}</label>
+                  </div>
+                ))}
+              </div>
+              <span className={`field-error ${errors.gender ? "show" : ""}`}>Please select a gender.</span>
+            </div>
+
+            <div className="auth-input-group">
+              <label className="auth-input-label">Profile photo <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>(optional)</span></label>
+              <div className="avatar-upload">
+                <div className="avatar-preview" onClick={() => fileRef.current?.click()}>
+                  {avatarPreview ? <img src={avatarPreview} alt="preview" /> : <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                </div>
+                <div className="avatar-info"><span onClick={() => fileRef.current?.click()}>Click to upload</span> a photo<br />JPG, PNG or WebP &middot; Max 2MB</div>
+              </div>
+              <input type="file" ref={fileRef} accept="image/*" style={{ display: "none" }} onChange={handleAvatar} />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="auth-btn auth-btn-ghost" style={{ flex: 1 }} onClick={() => goPanel(1)}>&larr; Back</button>
+              <button className="auth-btn auth-btn-dark" style={{ flex: 2 }} onClick={submitSignup} disabled={loading}>
+                {loading ? <span className="spinner"></span> : "Create account"}
+              </button>
+            </div>
+          </div>
+
+          {/* STEP 3: OTP */}
+          <div className={`step-panel ${currentStep === 3 ? "active" : ""}`}>
+            <div className="form-header signup-header">
+              <h1 className="form-title">Check your email</h1>
+              <p className="form-sub">We sent a 6-digit code to {state.email}</p>
+            </div>
+
+            <div className="otp-group">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <input key={i} className="otp-input" maxLength="1" type="text" inputMode="numeric" pattern="[0-9]" onInput={(e) => initOtp(e, i)} onKeyDown={(e) => handleOtpKeyDown(e, i)} />
+              ))}
+            </div>
+
+            <div className="otp-footer">
+              <p className="otp-hint">The code expires in <strong>60 seconds</strong></p>
+              <p className="otp-resend">Didn&apos;t get it? <button onClick={resendOtp}>Resend code</button></p>
+            </div>
+
+            <button className="auth-btn auth-btn-dark" onClick={handleVerifyOtp} disabled={loading}>
+              {loading ? <><span className="spinner"></span> Verifying...</> : "Verify & Sign in"}
+            </button>
+          </div>
+
+          {/* SUCCESS */}
+          <div className={`step-panel ${currentStep === "success" ? "active" : ""}`}>
+            <div className="success-screen">
+              <div className="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20,6 9,17 4,12" /></svg>
+              </div>
+              <h2 className="success-title">You&apos;re in!</h2>
+              <p className="success-sub">Your account is verified.<br />Redirecting to your dashboard...</p>
+              <div className="spinner dark"></div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

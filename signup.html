@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account — SkillSync AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="shared.css"/>
+  <style>
+    body { min-height: 100vh; display: flex; }
+
+    /* ── Left ── */
+    .auth-left {
+      width: 420px; flex-shrink: 0;
+      background: var(--bg-sidebar);
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 52px;
+      position: relative; overflow: hidden;
+    }
+
+    .auth-left::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .auth-left::after {
+      content: ''; position: absolute;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(26,107,74,0.3) 0%, transparent 70%);
+      top: -60px; left: -60px; pointer-events: none;
+    }
+
+    .left-logo { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+    .logo-mark { width: 36px; height: 36px; background: var(--accent); border-radius: 9px; display: grid; place-items: center; }
+    .logo-mark svg { width: 20px; height: 20px; }
+    .logo-name { font-family: var(--serif); font-size: 1.2rem; color: #fff; }
+
+    .left-steps { position: relative; z-index: 1; }
+    .steps-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.3); margin-bottom: 20px; }
+
+    .step-list { display: flex; flex-direction: column; gap: 0; }
+
+    .step-item {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 16px 0; position: relative;
+    }
+
+    .step-item:not(:last-child)::after {
+      content: ''; position: absolute;
+      left: 15px; top: 44px; width: 2px;
+      height: calc(100% - 28px);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .step-item.active::after { background: rgba(26,107,74,0.4); }
+
+    .step-dot {
+      width: 32px; height: 32px; flex-shrink: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.12);
+      display: grid; place-items: center;
+      font-size: 0.78rem; font-weight: 600;
+      color: rgba(255,255,255,0.3);
+      transition: all 0.3s; background: transparent;
+    }
+
+    .step-item.active .step-dot {
+      border-color: var(--accent); background: var(--accent);
+      color: #fff; box-shadow: 0 0 16px rgba(26,107,74,0.5);
+    }
+
+    .step-item.done .step-dot {
+      border-color: rgba(93,224,160,0.4);
+      background: rgba(93,224,160,0.15);
+      color: #5de0a0;
+    }
+
+    .step-content { padding-top: 5px; }
+    .step-name { font-size: 0.88rem; font-weight: 500; color: rgba(255,255,255,0.3); transition: color 0.3s; }
+    .step-item.active .step-name { color: #fff; }
+    .step-item.done .step-name { color: rgba(93,224,160,0.7); }
+    .step-desc { font-size: 0.75rem; color: rgba(255,255,255,0.2); margin-top: 2px; }
+
+    .left-footer { font-size: 0.78rem; color: rgba(255,255,255,0.2); position: relative; z-index: 1; }
+
+    /* ── Right ── */
+    .auth-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px; }
+
+    .auth-form-box { width: 100%; max-width: 440px; }
+
+    /* Step panels */
+    .step-panel { display: none; flex-direction: column; gap: 20px; }
+    .step-panel.active { display: flex; animation: fadeUp 0.4s ease both; }
+
+    .form-header { margin-bottom: 8px; }
+    .form-title { font-family: var(--serif); font-size: 2rem; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 6px; }
+    .form-sub { font-size: 0.88rem; color: var(--ink-soft); }
+    .form-sub a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+    /* Progress bar */
+    .progress-bar { height: 3px; background: var(--rule); border-radius: 2px; margin-bottom: 28px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.5s ease; }
+
+    /* Google */
+    .google-btn {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      width: 100%; padding: 12px;
+      background: var(--bg-card); border: 1px solid var(--rule); border-radius: 8px;
+      font-family: var(--sans); font-size: 0.9rem; font-weight: 500; color: var(--ink);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .google-btn:hover { background: var(--bg); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+    .google-btn img { width: 20px; height: 20px; }
+
+    /* Gender selector */
+    .gender-group { display: flex; gap: 10px; }
+    .gender-opt { flex: 1; }
+    .gender-opt input { display: none; }
+    .gender-opt label {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 11px; border: 1px solid var(--rule); border-radius: 8px;
+      font-size: 0.88rem; font-weight: 500; color: var(--ink-soft);
+      cursor: pointer; transition: all 0.2s; background: var(--bg);
+    }
+    .gender-opt label:hover { border-color: var(--accent); color: var(--accent); }
+    .gender-opt input:checked + label { background: var(--accent-lt); border-color: var(--accent); color: var(--accent); }
+
+    /* Avatar upload */
+    .avatar-upload { display: flex; align-items: center; gap: 20px; }
+    .avatar-preview {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--bg); border: 2px dashed var(--rule);
+      display: grid; place-items: center;
+      overflow: hidden; flex-shrink: 0; transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .avatar-preview:hover { border-color: var(--accent); }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .avatar-preview svg { width: 28px; height: 28px; stroke: var(--ink-faint); }
+    .avatar-info { font-size: 0.82rem; color: var(--ink-soft); line-height: 1.6; }
+    .avatar-info span { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+    /* OTP inputs */
+    .otp-group { display: flex; gap: 10px; justify-content: center; }
+    .otp-input {
+      width: 52px; height: 60px; text-align: center;
+      font-family: var(--serif); font-size: 1.6rem; font-weight: 400;
+      border: 1.5px solid var(--rule); border-radius: 10px;
+      background: var(--bg); outline: none; color: var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .otp-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,107,74,0.1); }
+
+    .otp-footer { text-align: center; }
+    .otp-hint { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 12px; }
+    .otp-resend { font-size: 0.82rem; color: var(--ink-faint); }
+    .otp-resend button { background: none; border: none; color: var(--accent); font-family: var(--sans); font-size: 0.82rem; cursor: pointer; font-weight: 500; }
+
+    /* Success */
+    .success-screen { text-align: center; padding: 20px 0; }
+    .success-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--accent-lt); border: 2px solid rgba(26,107,74,0.2);
+      display: grid; place-items: center; margin: 0 auto 24px;
+      animation: scaleIn 0.4s ease both;
+    }
+    .success-icon svg { width: 36px; height: 36px; stroke: var(--accent); }
+    .success-title { font-family: var(--serif); font-size: 1.8rem; color: var(--ink); margin-bottom: 10px; }
+    .success-sub { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 28px; }
+
+    .field-error { font-size: 0.78rem; color: #c0392b; display: none; margin-top: 2px; }
+    .field-error.show { display: block; }
+
+    .pw-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--ink-faint); }
+    .pw-toggle svg { width: 18px; height: 18px; display: block; }
+
+    @media (max-width: 900px) {
+      .auth-left { display: none; }
+      .auth-right { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Left -->
+<aside class="auth-left">
+  <div class="left-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <span class="logo-name">SkillSync AI</span>
+  </div>
+
+  <div class="left-steps">
+    <p class="steps-label">Account setup</p>
+    <div class="step-list" id="stepList">
+      <div class="step-item active" data-step="1">
+        <div class="step-dot">1</div>
+        <div class="step-content">
+          <div class="step-name">Your details</div>
+          <div class="step-desc">Name, email, password</div>
+        </div>
+      </div>
+      <div class="step-item" data-step="2">
+        <div class="step-dot">2</div>
+        <div class="step-content">
+          <div class="step-name">Profile setup</div>
+          <div class="step-desc">Gender & photo</div>
+        </div>
+      </div>
+      <div class="step-item" data-step="3">
+        <div class="step-dot">3</div>
+        <div class="step-content">
+          <div class="step-name">Verify email</div>
+          <div class="step-desc">6-digit OTP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="left-footer">© 2025 SkillSync AI · Free to use</div>
+</aside>
+
+<!-- Right -->
+<main class="auth-right">
+  <div class="auth-form-box">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:33%"></div>
+    </div>
+
+    <!-- ── STEP 1: Details ── -->
+    <div class="step-panel active" id="panel1">
+      <div class="form-header">
+        <h1 class="form-title">Create account</h1>
+        <p class="form-sub">Already have one? <a href="login.html">Sign in</a></p>
+      </div>
+
+      <button class="google-btn" onclick="handleGoogle()">
+        <img src="https://www.google.com/favicon.ico" alt="Google"/>
+        Continue with Google
+      </button>
+
+      <div class="divider"><span>or with email</span></div>
+
+      <div class="input-group">
+        <label class="input-label">Full name</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input class="input" id="name" type="text" placeholder="Ali Hassan" autocomplete="name"/>
+        </div>
+        <span class="field-error" id="nameError">Name is required.</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Email address</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+          <input class="input" id="email" type="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+        <span class="field-error" id="emailError">Enter a valid email.</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input class="input" id="password" type="password" placeholder="Min. 8 characters" autocomplete="new-password"/>
+          <button type="button" class="pw-toggle" onclick="togglePw('password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <span class="field-error" id="passwordError">Min. 8 characters required.</span>
+      </div>
+
+      <button class="btn btn-dark btn-full" onclick="goStep2()">Continue →</button>
+    </div>
+
+    <!-- ── STEP 2: Profile ── -->
+    <div class="step-panel" id="panel2">
+      <div class="form-header">
+        <h1 class="form-title">Your profile</h1>
+        <p class="form-sub">Help us personalise your experience</p>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Gender</label>
+        <div class="gender-group">
+          <div class="gender-opt">
+            <input type="radio" name="gender" id="male" value="male"/>
+            <label for="male">♂ Male</label>
+          </div>
+          <div class="gender-opt">
+            <input type="radio" name="gender" id="female" value="female"/>
+            <label for="female">♀ Female</label>
+          </div>
+          <div class="gender-opt">
+            <input type="radio" name="gender" id="other" value="other"/>
+            <label for="other">◎ Other</label>
+          </div>
+        </div>
+        <span class="field-error" id="genderError">Please select a gender.</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Profile photo <span style="color:var(--ink-faint);font-weight:400">(optional)</span></label>
+        <div class="avatar-upload">
+          <div class="avatar-preview" onclick="document.getElementById('avatarInput').click()">
+            <img id="avatarPreview" alt="preview"/>
+            <svg id="avatarIcon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="avatar-info">
+            <span onclick="document.getElementById('avatarInput').click()">Click to upload</span> a photo<br/>
+            JPG, PNG or WebP · Max 2MB
+          </div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="previewAvatar(event)"/>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="goPanel(1)">← Back</button>
+        <button class="btn btn-dark" style="flex:2" id="signupBtn" onclick="submitSignup()">Create account</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: OTP ── -->
+    <div class="step-panel" id="panel3">
+      <div class="form-header">
+        <h1 class="form-title">Check your email</h1>
+        <p class="form-sub" id="otpSub">We sent a 6-digit code to your email</p>
+      </div>
+
+      <div class="otp-group">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+      </div>
+
+      <div class="otp-footer">
+        <p class="otp-hint">The code expires in <strong>60 seconds</strong></p>
+        <p class="otp-resend">Didn't get it? <button onclick="resendOtp()">Resend code</button></p>
+      </div>
+
+      <button class="btn btn-dark btn-full" id="verifyBtn" onclick="verifyOtp()">Verify & Sign in</button>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div class="step-panel" id="panelSuccess">
+      <div class="success-screen">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"/></svg>
+        </div>
+        <h2 class="success-title">You're in!</h2>
+        <p class="success-sub">Your account is verified.<br/>Redirecting to your dashboard...</p>
+        <div class="spinner dark"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const state = { name:'', email:'', password:'', gender:'', profileImage: null };
+
+  function toast(msg, type='default') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'text' ? 'password' : 'text';
+  }
+
+  function goPanel(n) {
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    const pid = n === 'success' ? 'panelSuccess' : `panel${n}`;
+    document.getElementById(pid).classList.add('active');
+
+    // update sidebar
+    document.querySelectorAll('.step-item').forEach(item => {
+      const s = parseInt(item.dataset.step);
+      item.classList.remove('active','done');
+      if (s === n) item.classList.add('active');
+      if (s < n) item.classList.add('done');
+    });
+
+    // progress
+    const pct = { 1: 33, 2: 66, 3: 100 };
+    if (pct[n]) document.getElementById('progressFill').style.width = pct[n] + '%';
+  }
+
+  function goStep2() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pw = document.getElementById('password').value;
+    let ok = true;
+
+    if (!name) { document.getElementById('nameError').classList.add('show'); ok = false; }
+    else document.getElementById('nameError').classList.remove('show');
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').classList.add('show'); ok = false; }
+    else document.getElementById('emailError').classList.remove('show');
+
+    if (pw.length < 8) { document.getElementById('passwordError').classList.add('show'); ok = false; }
+    else document.getElementById('passwordError').classList.remove('show');
+
+    if (!ok) return;
+    state.name = name; state.email = email; state.password = pw;
+    goPanel(2);
+  }
+
+  function previewAvatar(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    state.profileImage = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.getElementById('avatarPreview');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      document.getElementById('avatarIcon').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function submitSignup() {
+    const gender = document.querySelector('input[name="gender"]:checked')?.value;
+    if (!gender) { document.getElementById('genderError').classList.add('show'); return; }
+    document.getElementById('genderError').classList.remove('show');
+
+    state.gender = gender;
+
+    const btn = document.getElementById('signupBtn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+
+    try {
+      const formData = new FormData();
+      formData.append('name', state.name);
+      formData.append('email', state.email);
+      formData.append('password', state.password);
+      formData.append('gender', state.gender);
+      if (state.profileImage) formData.append('profileImage', state.profileImage);
+
+      const res = await fetch('/api/auth/signup', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Signup failed');
+
+      document.getElementById('otpSub').textContent = `We sent a 6-digit code to ${state.email}`;
+      goPanel(3);
+      initOtpInputs();
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      btn.innerHTML = 'Create account';
+      btn.disabled = false;
+    }
+  }
+
+  function initOtpInputs() {
+    const inputs = document.querySelectorAll('.otp-input');
+    inputs.forEach((inp, i) => {
+      inp.value = '';
+      inp.addEventListener('input', () => {
+        if (inp.value.length === 1 && i < inputs.length - 1) inputs[i+1].focus();
+      });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i-1].focus();
+      });
+    });
+    inputs[0].focus();
+  }
+
+  async function verifyOtp() {
+    const otp = [...document.querySelectorAll('.otp-input')].map(i => i.value).join('');
+    if (otp.length < 6) { toast('Enter all 6 digits', 'error'); return; }
+
+    const btn = document.getElementById('verifyBtn');
+    btn.innerHTML = '<span class="spinner"></span> Verifying...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.email, otp, purpose: 'VERIFYEMAIL', deviceModel: navigator.userAgent })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Invalid OTP');
+
+      localStorage.setItem('accessToken', data.data.accessToken);
+      localStorage.setItem('refreshToken', data.data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.data));
+
+      goPanel('success');
+      setTimeout(() => window.location.href = 'dashboard.html', 2000);
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.innerHTML = 'Verify & Sign in';
+      btn.disabled = false;
+    }
+  }
+
+  async function resendOtp() {
+    try {
+      await fetch('/api/auth/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.email, purpose: 'VERIFYEMAIL' })
+      });
+      toast('New code sent!', 'success');
+    } catch { toast('Failed to resend', 'error'); }
+  }
+
+  function handleGoogle() { toast('Google sign-in coming soon!'); }
+</script>
+</body>
+</html>

@@ -388,25 +388,25 @@
   gap: 32px;
 }
 
-.stat-item {
+.landing .stat-item {
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
 
-.stat-num {
+.landing .stat-num {
   font-family: var(--serif);
   font-size: 2.2rem;
   color: #fff;
   line-height: 1;
 }
 
-.stat-label {
+.landing .stat-label {
   font-size: 0.85rem;
   color: rgba(255,255,255,0.5);
 }
 
-.stat-divider {
+.landing .stat-divider {
   width: 1px;
   height: 40px;
   background: rgba(255,255,255,0.12);
@@ -415,16 +415,16 @@
 /* ════════════════════════════════
    HOW IT WORKS
 ════════════════════════════════ */
-.section {
+.landing .section {
   padding: 120px 48px;
 }
 
-.section-inner {
+.landing .section-inner {
   max-width: 1100px;
   margin: 0 auto;
 }
 
-.section-label {
+.landing .section-label {
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -433,7 +433,7 @@
   margin-bottom: 16px;
 }
 
-.section-title {
+.landing .section-title {
   font-family: var(--serif);
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1.1;
@@ -443,13 +443,13 @@
   margin-bottom: 72px;
 }
 
-.steps-grid {
+.landing .steps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2px;
 }
 
-.step {
+.landing .step {
   background: var(--bg-card);
   padding: 40px 36px;
   border: 1px solid var(--rule);
@@ -458,12 +458,12 @@
   transition: transform 0.3s;
 }
 
-.step:first-child { border-radius: 12px 0 0 12px; }
-.step:last-child  { border-radius: 0 12px 12px 0; }
+.landing .step:first-child { border-radius: 12px 0 0 12px; }
+.landing .step:last-child  { border-radius: 0 12px 12px 0; }
 
-.step:hover { transform: translateY(-4px); z-index: 1; box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+.landing .step:hover { transform: translateY(-4px); z-index: 1; box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
 
-.step-num {
+.landing .step-num {
   font-family: var(--serif);
   font-size: 4rem;
   color: var(--rule);
@@ -472,9 +472,9 @@
   transition: color 0.3s;
 }
 
-.step:hover .step-num { color: var(--accent-lt); }
+.landing .step:hover .step-num { color: var(--accent-lt); }
 
-.step-icon {
+.landing .step-icon {
   width: 44px;
   height: 44px;
   background: var(--accent-lt);
@@ -484,9 +484,9 @@
   margin-bottom: 20px;
 }
 
-.step-icon svg { width: 22px; height: 22px; stroke: var(--accent); }
+.landing .step-icon svg { width: 22px; height: 22px; stroke: var(--accent); }
 
-.step-title {
+.landing .step-title {
   font-family: var(--serif);
   font-size: 1.35rem;
   line-height: 1.2;
@@ -494,13 +494,13 @@
   margin-bottom: 12px;
 }
 
-.step-desc {
+.landing .step-desc {
   font-size: 0.9rem;
   line-height: 1.7;
   color: var(--ink-soft);
 }
 
-.step-tech {
+.landing .step-tech {
   margin-top: 24px;
   display: flex;
   gap: 6px;
@@ -592,7 +592,7 @@
 /* ════════════════════════════════
    FEATURES
 ════════════════════════════════ */
-.features-grid {
+.landing .features-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
@@ -678,7 +678,7 @@
   margin-bottom: 48px;
 }
 
-.upload-zone {
+.landing .upload-zone {
   border: 2px dashed var(--rule);
   border-radius: 16px;
   padding: 56px 40px;
@@ -688,12 +688,12 @@
   margin-bottom: 24px;
 }
 
-.upload-zone:hover {
+.landing .upload-zone:hover {
   border-color: var(--accent);
   background: var(--accent-lt);
 }
 
-.upload-icon {
+.landing .upload-icon {
   width: 56px;
   height: 56px;
   background: var(--bg);
@@ -704,16 +704,16 @@
   border: 1px solid var(--rule);
 }
 
-.upload-icon svg { width: 28px; height: 28px; stroke: var(--ink-soft); }
+.landing .upload-icon svg { width: 28px; height: 28px; stroke: var(--ink-soft); }
 
-.upload-text {
+.landing .upload-text {
   font-size: 1rem;
   font-weight: 500;
   color: var(--ink);
   margin-bottom: 6px;
 }
 
-.upload-hint {
+.landing .upload-hint {
   font-size: 0.85rem;
   color: var(--ink-faint);
 }
@@ -783,12 +783,12 @@
   .hero-floaters { display: none; }
   .hero-headline .line2 { padding-left: 0; }
   .stats-inner { flex-wrap: wrap; gap: 24px; }
-  .stat-divider { display: none; }
-  .section { padding: 80px 24px; }
+  .landing .stat-divider { display: none; }
+  .landing .section { padding: 80px 24px; }
   .pipeline-section { padding: 60px 24px; }
-  .steps-grid { grid-template-columns: 1fr; gap: 12px; }
-  .step { border-radius: 12px !important; }
-  .features-grid { grid-template-columns: 1fr; }
+  .landing .steps-grid { grid-template-columns: 1fr; gap: 12px; }
+  .landing .step { border-radius: 12px !important; }
+  .landing .features-grid { grid-template-columns: 1fr; }
   .cta-section { padding: 80px 24px; }
   .landing-footer { padding: 32px 24px; }
   .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
