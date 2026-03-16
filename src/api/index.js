@@ -1,8 +1,11 @@
 import axios from "axios";
 import useAuthStore from "../store/authStore";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_BASE,
+  timeout: 15000,
 });
 
 // Attach auth token to every request
@@ -29,6 +32,24 @@ function processQueue(error, token = null) {
   failedQueue = [];
 }
 
+// Extract a safe user-facing message from any error
+function safeErrorMessage(error, fallback = "Something went wrong") {
+  if (error.response) {
+    const d = error.response.data;
+    // Server returned JSON with a message field
+    if (d && typeof d === "object" && d.message) return d.message;
+    // Map status codes to friendly messages
+    if (error.response.status === 401) return "Invalid credentials";
+    if (error.response.status === 403) return "Access denied";
+    if (error.response.status === 404) return "Not found";
+    if (error.response.status === 429) return "Too many requests — try again later";
+    if (error.response.status >= 500) return "Server error — try again later";
+  }
+  if (error.code === "ECONNABORTED") return "Request timed out";
+  if (!error.response && error.request) return "Network error — check connection";
+  return fallback;
+}
+
 // Response interceptor with token refresh logic
 api.interceptors.response.use(
   (response) => response,
@@ -44,7 +65,11 @@ api.interceptors.response.use(
         url.includes("/auth/login") ||
         url.includes("/auth/signup")
       ) {
-        return Promise.reject(error);
+        // Normalize the error before passing to caller
+        const msg = safeErrorMessage(error, "Invalid email or password");
+        const normalized = new Error(msg);
+        normalized.response = error.response;
+        return Promise.reject(normalized);
       }
 
       if (isRefreshing) {
@@ -64,12 +89,12 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) {
         forceLogout();
-        return Promise.reject(error);
+        return Promise.reject(new Error("Session expired"));
       }
 
       try {
         const { data } = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+          `${API_BASE}/auth/refresh-token`,
           { refreshToken }
         );
 
@@ -92,13 +117,18 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         forceLogout();
-        return Promise.reject(refreshError);
+        return Promise.reject(new Error("Session expired — please log in again"));
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(error);
+    // For all other errors, normalize the message
+    const msg = safeErrorMessage(error);
+    const normalized = new Error(msg);
+    normalized.response = error.response;
+    normalized.request = error.request;
+    return Promise.reject(normalized);
   }
 );
 

@@ -15,7 +15,7 @@ export default function DashApplicationsPage() {
     try {
       const { data } = await fetchMyApplications();
       const d = data.data || data;
-      setApplications(d.applications || d.items || []);
+      setApplications(Array.isArray(d) ? d : (d.applications || d.items || []));
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load applications");
       setApplications([]);

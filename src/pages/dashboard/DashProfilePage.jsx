@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
-import { updateProfile, updatePassword, logout as apiLogout } from "../../api/auth.api";
+import { updateProfile, updatePassword, getProfile, logout as apiLogout } from "../../api/auth.api";
 
 export default function DashProfilePage() {
   const navigate = useNavigate();
@@ -28,6 +28,16 @@ export default function DashProfilePage() {
     setTimeout(() => el.remove(), 3500);
   }
 
+  async function refreshProfile() {
+    try {
+      const { data } = await getProfile();
+      const fresh = data?.data || data;
+      setUser(fresh);
+      setEditName(fresh.name || "");
+      setEditGender(fresh.gender || "other");
+    } catch { /* silent — user still sees stale data */ }
+  }
+
   async function handleLogout() {
     apiLogout().catch(() => {});
     localStorage.clear();
@@ -42,14 +52,11 @@ export default function DashProfilePage() {
       const formData = new FormData();
       formData.append("name", editName);
       formData.append("gender", editGender);
-      const { data } = await updateProfile(formData);
-      if (data.success || data.data) {
-        const updatedUser = { ...user, name: editName, gender: editGender };
-        setUser(updatedUser);
-        toast("Profile updated!", "success");
-      }
+      await updateProfile(formData);
+      await refreshProfile();
+      toast("Profile updated!", "success");
     } catch (err) {
-      toast(err.response?.data?.message || err.message, "error");
+      toast(err.message || "Failed to update profile", "error");
     } finally {
       setSaving(false);
     }
@@ -79,15 +86,11 @@ export default function DashProfilePage() {
       formData.append("profileImage", file);
       formData.append("name", editName);
       formData.append("gender", editGender);
-      const { data } = await updateProfile(formData);
-      if (data.success || data.data) {
-        const d = data.data || data;
-        const updatedUser = { ...user, profileImage: d.user?.profileImage || user.profileImage };
-        setUser(updatedUser);
-        toast("Profile photo updated!", "success");
-      }
+      await updateProfile(formData);
+      await refreshProfile();
+      toast("Profile photo updated!", "success");
     } catch (err) {
-      toast(err.response?.data?.message || err.message, "error");
+      toast(err.message || "Failed to update photo", "error");
     }
   }
 

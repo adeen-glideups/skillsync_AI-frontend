@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { forgotPasswordRequestOtp, verifyOtp, updatePassword } from "../api/auth.api";
+import { forgotPasswordRequestOtp, verifyOtp, resetPassword } from "../api/auth.api";
 import "../styles/auth.css";
 
 export default function ForgotPasswordPage() {
@@ -41,8 +41,7 @@ export default function ForgotPasswordPage() {
         if (inputs[0]) inputs[0].focus();
       }, 100);
     } catch (err) {
-      const data = err.response?.data;
-      toast((data && typeof data === "object" && data.message) ? data.message : "Failed to send reset code", "error");
+      toast(err.message || "Failed to send reset code", "error");
     } finally {
       setLoading(false);
     }
@@ -76,8 +75,7 @@ export default function ForgotPasswordPage() {
       toast("Code verified!", "success");
       setStep(3);
     } catch (err) {
-      const data = err.response?.data;
-      toast((data && typeof data === "object" && data.message) ? data.message : "Invalid code", "error");
+      toast(err.message || "Invalid code", "error");
     } finally {
       setLoading(false);
     }
@@ -90,12 +88,14 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      await updatePassword({ oldPassword: "", newPassword: newPw });
+      await resetPassword(newPw);
+      // Server logs out all devices on reset — clear local tokens
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       setStep(4);
       setTimeout(() => navigate("/login"), 2500);
     } catch (err) {
-      const data = err.response?.data;
-      toast((data && typeof data === "object" && data.message) ? data.message : "Failed to reset password", "error");
+      toast(err.message || "Failed to reset password", "error");
     } finally {
       setLoading(false);
     }

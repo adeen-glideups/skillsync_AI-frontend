@@ -37,7 +37,7 @@ export default function DashHomePage() {
     try {
       const { data } = await fetchJobs({ page: 1, limit: 6 });
       const d = data.data || data;
-      setJobs(d.jobs || d.items || []);
+      setJobs(Array.isArray(d) ? d : (d.jobs || d.items || []));
     } catch {
       setJobs([]);
     } finally {
@@ -140,7 +140,7 @@ export default function DashHomePage() {
               <span className={`job-remote-badge ${j.remote ? "remote" : "onsite"}`}>{j.remote ? "Remote" : "On-site"}</span>
             </div>
             <div className="job-title">{j.title}</div>
-            <div className="job-company">{j.company || "Company"} &middot; {j.location || "Worldwide"}</div>
+            <div className="job-company">{j.company || "Company"}</div>
             <div className="job-tags">
               {(Array.isArray(j.tags) ? j.tags : (j.skills || "").split(",").map((s) => s.trim())).slice(0, 3).map((t, ti) => (
                 <span key={ti} className="job-tag">{t}</span>

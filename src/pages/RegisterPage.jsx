@@ -67,8 +67,9 @@ export default function RegisterPage() {
 
       if (payload?.accessToken) {
         localStorage.setItem("accessToken", payload.accessToken);
-        localStorage.setItem("refreshToken", payload.refreshToken);
-        localStorage.setItem("user", JSON.stringify(payload.user || {}));
+        if (payload.refreshToken) localStorage.setItem("refreshToken", payload.refreshToken);
+        const { accessToken: _a, refreshToken: _r, ...user } = payload;
+        localStorage.setItem("user", JSON.stringify(user));
       }
 
       await requestOtp(state.email.trim(), "VERIFYEMAIL");
@@ -79,8 +80,7 @@ export default function RegisterPage() {
         if (inputs[0]) inputs[0].focus();
       }, 100);
     } catch (err) {
-      const data = err.response?.data;
-      toast((data && typeof data === "object" && data.message) ? data.message : "Signup failed", "error");
+      toast(err.message || "Signup failed", "error");
     } finally {
       setLoading(false);
     }
@@ -107,8 +107,8 @@ export default function RegisterPage() {
 
       if (payload?.accessToken) {
         localStorage.setItem("accessToken", payload.accessToken);
-        localStorage.setItem("refreshToken", payload.refreshToken);
-        const user = payload.user || {};
+        if (payload.refreshToken) localStorage.setItem("refreshToken", payload.refreshToken);
+        const { accessToken: _a, refreshToken: _r, ...user } = payload;
         localStorage.setItem("user", JSON.stringify(user));
         setAuth(user, payload.accessToken);
       } else {
@@ -120,8 +120,7 @@ export default function RegisterPage() {
       goPanel("success");
       setTimeout(() => navigate("/dashboard"), 2000);
     } catch (err) {
-      const data = err.response?.data;
-      toast((data && typeof data === "object" && data.message) ? data.message : "Invalid OTP", "error");
+      toast(err.message || "Invalid OTP", "error");
       setLoading(false);
     }
   }

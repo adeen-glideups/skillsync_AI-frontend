@@ -11,3 +11,9 @@ export const uploadResume = (file) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+// 3.3 Delete Resume by ID (Auth required)
+export const deleteResume = (resumeId) => api.delete(`/resumes/${resumeId}`);
+
+// 3.4 Delete All User Resumes (Auth required)
+export const deleteAllResumes = () => api.delete("/resumes");

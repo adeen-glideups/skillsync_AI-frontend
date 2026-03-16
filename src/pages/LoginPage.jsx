@@ -46,15 +46,17 @@ export default function LoginPage() {
       });
 
       const payload = res.data?.data || res.data;
-      const user = payload?.user;
       const accessToken = payload?.accessToken;
       const refreshToken = payload?.refreshToken;
 
-      if (!accessToken || !user) {
+      if (!accessToken) {
         toast("Unexpected server response", "error");
         setLoading(false);
         return;
       }
+
+      // Extract user object — API returns user fields flat alongside tokens
+      const { accessToken: _a, refreshToken: _r, ...user } = payload;
 
       localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
@@ -63,14 +65,7 @@ export default function LoginPage() {
 
       navigate("/dashboard");
     } catch (err) {
-      let msg = "Login failed";
-      if (err.response) {
-        const data = err.response.data;
-        msg = (data && typeof data === "object" && data.message) ? data.message : "Invalid email or password";
-      } else if (err.request) {
-        msg = "Network error — check connection";
-      }
-      toast(msg, "error");
+      toast(err.message || "Login failed", "error");
       setLoading(false);
     }
   }

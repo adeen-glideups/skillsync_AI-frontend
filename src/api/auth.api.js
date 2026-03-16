@@ -26,9 +26,13 @@ export const verifyOtp = ({ email, otp, purpose }) =>
 export const forgotPasswordRequestOtp = (email) =>
   api.post("/auth/forgot-password-request-otp", { email });
 
-// 1.7 Update Password (Auth required)
+// 1.7 Update Password (Auth required) — for profile/settings
 export const updatePassword = ({ oldPassword, newPassword }) =>
   api.post("/auth/update-password", { oldPassword, newPassword });
+
+// 1.7b Reset Password (Auth required) — for forgot-password flow
+export const resetPassword = (password) =>
+  api.post("/auth/reset-password", { password });
 
 // 1.8 Refresh Token
 export const refreshToken = (token) =>
@@ -48,3 +52,6 @@ export const updateProfile = (formData) =>
   api.post("/auth/update-profile", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+
+// 1.12 Get Profile (Auth required)
+export const getProfile = () => api.get("/auth/profile");

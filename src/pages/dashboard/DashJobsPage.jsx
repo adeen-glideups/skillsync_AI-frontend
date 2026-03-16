@@ -46,7 +46,7 @@ export default function DashJobsPage() {
         category: selectedCategory || undefined,
       });
       const d = data.data || data;
-      const newJobs = d.jobs || d.items || [];
+      const newJobs = Array.isArray(d) ? d : (d.jobs || d.items || []);
       if (pageNum === 1) {
         setJobs(newJobs);
       } else {
@@ -82,15 +82,18 @@ export default function DashJobsPage() {
             {f === "all" ? "All" : f === "remote" ? "Remote" : "On-site"}
           </button>
         ))}
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={`filter-chip ${selectedCategory === cat ? "active" : ""}`}
-            onClick={() => setSelectedCategory(selectedCategory === cat ? "" : cat)}
-          >
-            {cat}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const name = typeof cat === "string" ? cat : cat.name;
+          return (
+            <button
+              key={name}
+              className={`filter-chip ${selectedCategory === name ? "active" : ""}`}
+              onClick={() => setSelectedCategory(selectedCategory === name ? "" : name)}
+            >
+              {name}
+            </button>
+          );
+        })}
       </div>
 
       <div className="jobs-grid">

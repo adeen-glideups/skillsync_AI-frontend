@@ -1,26 +1,52 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchResumes, uploadResume } from "../../api/resume.api";
+import { fetchResumes, uploadResume, deleteResume, deleteAllResumes } from "../../api/resume.api";
 import { calculateMatches } from "../../api/matches.api";
+
+const AI_STATUS_LINES = [
+  "Parsing document structure...",
+  "Extracting key skills and competencies...",
+  "Analyzing work experience timeline...",
+  "Building candidate profile vector...",
+  "Querying job database with semantic search...",
+  "Running AI similarity scoring engine...",
+  "Cross-referencing skill embeddings...",
+  "Evaluating role-to-experience alignment...",
+  "Ranking matches by relevance score...",
+  "Generating match explanations...",
+  "Compiling your personalized results...",
+  "Finalizing match confidence scores...",
+];
 
 export default function DashUploadPage() {
   const navigate = useNavigate();
   const [uploads, setUploads] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [progressLabel, setProgressLabel] = useState("");
-  const [progressSub, setProgressSub] = useState("");
   const fileInputRef = useRef(null);
+
+  // Matching flow state
+  const [matching, setMatching] = useState(false);
+  const [statusIdx, setStatusIdx] = useState(0);
+  const [matchingPhase, setMatchingPhase] = useState("upload"); // upload | matching
 
   useEffect(() => {
     loadUploads();
   }, []);
 
+  // Rotate AI status lines while matching
+  useEffect(() => {
+    if (!matching) return;
+    const interval = setInterval(() => {
+      setStatusIdx((prev) => (prev + 1) % AI_STATUS_LINES.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [matching]);
+
   async function loadUploads() {
     try {
       const { data } = await fetchResumes();
       const d = data.data || data;
-      const resumes = d.resumes || d.items || [];
+      const resumes = Array.isArray(d) ? d : (d.resumes || d.items || []);
       setUploads(
         resumes.map((r) => ({
           id: r.id,
@@ -44,6 +70,30 @@ export default function DashUploadPage() {
     setTimeout(() => el.remove(), 3500);
   }
 
+  async function handleDeleteResume(e, resumeId, name) {
+    e.stopPropagation();
+    if (!window.confirm(`Delete "${name}"? This will also remove its matches.`)) return;
+    try {
+      await deleteResume(resumeId);
+      setUploads((prev) => prev.filter((u) => u.id !== resumeId));
+      toast("Resume deleted", "success");
+    } catch (err) {
+      toast(err.response?.data?.message || "Failed to delete resume", "error");
+    }
+  }
+
+  async function handleDeleteAll() {
+    if (!uploads || !uploads.length) return;
+    if (!window.confirm("Delete all resumes? This cannot be undone.")) return;
+    try {
+      await deleteAllResumes();
+      setUploads([]);
+      toast("All resumes deleted", "success");
+    } catch (err) {
+      toast(err.response?.data?.message || "Failed to delete resumes", "error");
+    }
+  }
+
   function handleDrop(e) {
     e.preventDefault();
     setDragOver(false);
@@ -59,36 +109,68 @@ export default function DashUploadPage() {
     if (file.size > 5 * 1024 * 1024) { toast("File too large. Max 5MB.", "error"); return; }
     if (!file.name.match(/\.(pdf|docx)$/i)) { toast("Only PDF or DOCX files allowed.", "error"); return; }
 
-    setUploading(true);
-    setProgressLabel("Uploading resume...");
-    setProgressSub("Extracting text and generating embeddings");
+    setMatching(true);
+    setStatusIdx(0);
+    setMatchingPhase("upload");
 
     try {
       const { data } = await uploadResume(file);
 
-      setProgressLabel("Finding your matches...");
-      setProgressSub("Running semantic search + AI verification");
+      setMatchingPhase("matching");
 
       const d2 = data.data || data;
       const resumeId = d2.resume?.id || d2.id;
-      if (resumeId) await calculateMatches({ resumeId, topN: 5 });
-
-      toast("Resume uploaded successfully!", "success");
-      navigate("/dashboard/matches");
+      if (resumeId) {
+        await calculateMatches({ resumeId, topN: 5 });
+        navigate(`/dashboard/matches?resumeId=${resumeId}`);
+      } else {
+        toast("Resume uploaded successfully!", "success");
+        navigate("/dashboard/matches");
+      }
     } catch (err) {
       toast(err.response?.data?.message || err.message, "error");
-    } finally {
-      setUploading(false);
+      setMatching(false);
     }
   }
 
-  async function runMatch(resumeId) {
-    try {
-      await calculateMatches({ resumeId, topN: 5 });
-      navigate("/dashboard/matches");
-    } catch (err) {
-      toast(err.response?.data?.message || err.message, "error");
-    }
+  // If matching flow is active, show the animated screen
+  if (matching) {
+    return (
+      <div className="matching-flow">
+        <div className="matching-flow-header">
+          <div className="matching-flow-icon">
+            <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+            </svg>
+          </div>
+          <h2 className="matching-flow-title">
+            {matchingPhase === "upload" ? "Uploading your resume" : "Finding your best matches"}
+          </h2>
+          <div className="matching-flow-status">
+            <div className="matching-flow-spinner"></div>
+            <span key={statusIdx} className="matching-flow-line">{AI_STATUS_LINES[statusIdx]}</span>
+          </div>
+          <div className="matching-flow-progress">
+            <div className="matching-flow-progress-bar" style={{ animationDuration: "45s" }}></div>
+          </div>
+        </div>
+
+        <div className="matching-flow-cards">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="match-card matching-flow-skeleton" style={{ animationDelay: `${i * 0.15}s` }}>
+              <div className="match-score-ring">
+                <div className="skeleton" style={{ width: 56, height: 56, borderRadius: "50%" }}></div>
+              </div>
+              <div className="match-body" style={{ flex: 1 }}>
+                <div className="skeleton skeleton-line" style={{ height: 18, width: "65%", marginBottom: 8 }}></div>
+                <div className="skeleton skeleton-line" style={{ height: 14, width: "45%", marginBottom: 14 }}></div>
+                <div className="skeleton skeleton-line" style={{ height: 48, width: "100%", borderRadius: 6 }}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -112,22 +194,20 @@ export default function DashUploadPage() {
           <p className="upload-zone-sub"><span>Click to browse</span> or drag &amp; drop<br />PDF or DOCX &middot; Max 5MB</p>
         </div>
         <input type="file" ref={fileInputRef} accept=".pdf,.docx" style={{ display: "none" }} onChange={handleFileSelect} />
-
-        {uploading && (
-          <div style={{ marginTop: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, background: "var(--bg-card)", border: "1px solid var(--rule)", borderRadius: 10 }}>
-              <div className="spinner dark"></div>
-              <div>
-                <div style={{ fontSize: "0.88rem", fontWeight: 500, color: "var(--ink)" }}>{progressLabel}</div>
-                <div style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginTop: 2 }}>{progressSub}</div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <div>
-        <h2 className="section-title" style={{ marginBottom: 20 }}>Recent Uploads</h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <h2 className="section-title" style={{ marginBottom: 0 }}>Recent Uploads</h2>
+          {uploads && uploads.length > 1 && (
+            <button className="upload-delete-all-btn" onClick={handleDeleteAll}>
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                <polyline points="3,6 5,6 21,6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Delete All
+            </button>
+          )}
+        </div>
         <div className="upload-list">
           {uploads === null ? [0, 1, 2].map((i) => (
             <div key={i} className="upload-item">
@@ -148,7 +228,12 @@ export default function DashUploadPage() {
                 <div className="upload-item-name">{u.name}</div>
                 <div className="upload-item-meta">Uploaded {u.date}</div>
               </div>
-              <button className="upload-item-action" onClick={() => runMatch(u.id)}>Find matches &rarr;</button>
+              <button className="upload-item-action" onClick={() => navigate(`/dashboard/matches?resumeId=${u.id}`)}>See matches &rarr;</button>
+              <button className="upload-item-delete" onClick={(e) => handleDeleteResume(e, u.id, u.name)} title="Delete resume">
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3,6 5,6 21,6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
             </div>
           )) : (
             <p style={{ color: "var(--ink-faint)", fontSize: "0.88rem" }}>No uploads yet</p>
