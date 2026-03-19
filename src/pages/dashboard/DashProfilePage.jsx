@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { updateProfile, updatePassword, getProfile, logout as apiLogout } from "../../api/auth.api";
+import { signOutFromFirebase } from "../../lib/firebase";
 
 export default function DashProfilePage() {
   const navigate = useNavigate();
@@ -39,7 +40,8 @@ export default function DashProfilePage() {
   }
 
   async function handleLogout() {
-    apiLogout().catch(() => {});
+    await apiLogout().catch(() => {});
+    await signOutFromFirebase(); // Clear Firebase auth state
     localStorage.clear();
     clearAuth();
     navigate("/login");

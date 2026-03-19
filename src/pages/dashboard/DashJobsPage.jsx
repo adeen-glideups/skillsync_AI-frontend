@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchJobs, fetchCategories } from "../../api/jobs.api";
 
@@ -10,9 +10,12 @@ export default function DashJobsPage() {
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [jobType, setJobType] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loaderRef = useRef(null);
 
   useEffect(() => {
     loadCategories();
@@ -23,7 +26,21 @@ export default function DashJobsPage() {
     setJobs([]);
     setLoading(true);
     loadJobs(1);
-  }, [search, filter, selectedCategory]);
+  }, [search, filter, selectedCategory, jobType, sortBy]);
+
+  // Infinite scroll observer
+  const handleObserver = useCallback((entries) => {
+    const [entry] = entries;
+    if (entry.isIntersecting && !loading && !loadingMore && page < totalPages) {
+      loadJobs(page + 1);
+    }
+  }, [loading, loadingMore, page, totalPages]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleObserver, { threshold: 0.1 });
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   async function loadCategories() {
     try {
@@ -44,6 +61,8 @@ export default function DashJobsPage() {
         search: search || undefined,
         remote: filter === "all" ? undefined : filter === "remote",
         category: selectedCategory || undefined,
+        jobType: jobType || undefined,
+        sort: sortBy || undefined,
       });
       const d = data.data || data;
       const newJobs = Array.isArray(d) ? d : (d.jobs || d.items || []);
@@ -76,24 +95,44 @@ export default function DashJobsPage() {
         </div>
       </div>
 
-      <div className="filter-bar">
-        {["all", "remote", "onsite"].map((f) => (
-          <button key={f} className={`filter-chip ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
-            {f === "all" ? "All" : f === "remote" ? "Remote" : "On-site"}
-          </button>
-        ))}
-        {categories.map((cat) => {
-          const name = typeof cat === "string" ? cat : cat.name;
-          return (
-            <button
-              key={name}
-              className={`filter-chip ${selectedCategory === name ? "active" : ""}`}
-              onClick={() => setSelectedCategory(selectedCategory === name ? "" : name)}
-            >
-              {name}
-            </button>
-          );
-        })}
+      <div className="filter-row">
+        <div className="filter-group">
+          <label className="filter-label">Location</label>
+          <select className="filter-select" value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="all">All locations</option>
+            <option value="remote">Remote</option>
+            <option value="onsite">On-site</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label className="filter-label">Job Type</label>
+          <select className="filter-select" value={jobType} onChange={(e) => setJobType(e.target.value)}>
+            <option value="">All types</option>
+            <option value="full-time">Full-time</option>
+            <option value="part-time">Part-time</option>
+            <option value="contract">Contract</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label className="filter-label">Category</label>
+          <select className="filter-select" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+            <option value="">All categories</option>
+            {categories.map((cat) => {
+              const name = typeof cat === "string" ? cat : cat.name;
+              return <option key={name} value={name}>{name}</option>;
+            })}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label className="filter-label">Sort by</label>
+          <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
       </div>
 
       <div className="jobs-grid">
@@ -128,7 +167,7 @@ export default function DashJobsPage() {
                 <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 {j.location || "Worldwide"}
               </span>
-              <span style={{ fontSize: "0.75rem", color: "var(--ink-faint)" }}>{timeAgo(j.postedAt || j.createdAt)}</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--ink-faint)" }}>{timeAgo(j.createdAt || j.createdAt)}</span>
             </div>
           </div>
         )) : (
@@ -136,11 +175,15 @@ export default function DashJobsPage() {
         )}
       </div>
 
+      {/* Infinite scroll loader */}
       {!loading && page < totalPages && (
-        <div style={{ textAlign: "center", marginTop: 24 }}>
-          <button className="dash-btn dash-btn-ghost" onClick={() => loadJobs(page + 1)} disabled={loadingMore}>
-            {loadingMore ? <span className="spinner dark"></span> : "Load more"}
-          </button>
+        <div ref={loaderRef} style={{ textAlign: "center", padding: "24px 0" }}>
+          {loadingMore && <span className="spinner dark"></span>}
+        </div>
+      )}
+      {!loading && page >= totalPages && jobs.length > 0 && (
+        <div style={{ textAlign: "center", padding: 24, color: "var(--ink-faint)", fontSize: "0.85rem" }}>
+          You&apos;ve reached the end
         </div>
       )}
     </>

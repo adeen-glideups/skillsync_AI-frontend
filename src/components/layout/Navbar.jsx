@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
+import { signOutFromFirebase } from "../../lib/firebase";
 import Button from "../ui/Button";
 
 export default function Navbar() {
   const { isAuthenticated, clearAuth } = useAuthStore();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOutFromFirebase();
     clearAuth();
   };
 

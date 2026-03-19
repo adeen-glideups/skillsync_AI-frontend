@@ -1,12 +1,13 @@
 import api from "./index";
 
 // 2.1 List Jobs (paginated + filters)
-export const fetchJobs = ({ page = 1, limit = 10, search, remote, category, jobType } = {}) => {
+export const fetchJobs = ({ page = 1, limit = 10, search, remote, category, jobType, sort } = {}) => {
   const params = { page, limit };
   if (search) params.search = search;
   if (remote !== undefined) params.remote = remote;
   if (category) params.category = category;
   if (jobType) params.jobType = jobType;
+  if (sort) params.sort = sort;
   return api.get("/jobs", { params });
 };
 

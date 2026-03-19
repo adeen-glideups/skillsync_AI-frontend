@@ -244,6 +244,15 @@
 /* Filter bar */
 .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 
+.filter-row {
+  display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+  padding: 16px; background: var(--bg-card); border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+
+.filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 140px; flex: 1; }
+.filter-label { font-size: 0.75rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.5px; }
+
 .filter-chip {
   padding: 7px 16px; border-radius: 100px;
   border: 1px solid var(--rule); background: var(--bg-card);
@@ -253,6 +262,22 @@
 }
 .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
 .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.filter-divider { width: 1px; height: 28px; background: var(--rule); margin: 0 4px; flex-shrink: 0; }
+
+.filter-select {
+  padding: 10px 32px 10px 12px; border-radius: 8px;
+  border: 1px solid var(--rule); background: var(--bg);
+  font-family: var(--sans); font-size: 0.85rem; font-weight: 500;
+  color: var(--ink); cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.filter-select:hover { border-color: var(--ink-faint); }
+.filter-select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(26,107,74,0.1); }
 
 /* Search bar */
 .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -577,11 +602,15 @@
   .upload-hero { flex-direction: column; }
   .dash-page { padding: 20px 16px; }
   .topbar { padding: 0 16px 0 56px; }
+  .filter-row { gap: 12px; padding: 12px; }
+  .filter-group { min-width: calc(50% - 8px); }
 }
 
 @media (max-width: 600px) {
   .stats-grid { grid-template-columns: 1fr; }
   .jobs-grid { grid-template-columns: 1fr; }
+  .filter-row { flex-direction: column; gap: 12px; }
+  .filter-group { min-width: 100%; }
 }
 
 /* ════════════════════════════

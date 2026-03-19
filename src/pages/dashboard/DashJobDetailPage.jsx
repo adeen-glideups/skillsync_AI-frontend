@@ -74,7 +74,7 @@ export default function DashJobDetailPage() {
                 {job.location || "Worldwide"}
               </span>
               <span className={`job-remote-badge ${job.remote ? "remote" : "onsite"}`}>{job.remote ? "Remote" : "On-site"}</span>
-              <span>{timeAgo(job.postedAt || job.createdAt)}</span>
+              <span>{timeAgo(job.createdAt || job.createdAt)}</span>
             </div>
           </div>
         </div>
@@ -115,6 +115,7 @@ export default function DashJobDetailPage() {
         <EasyApplyModal
           jobId={jobId}
           jobTitle={job.title}
+          jobCompany={job.company}
           onClose={() => setShowApply(false)}
         />
       )}

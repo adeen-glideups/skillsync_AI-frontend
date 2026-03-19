@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { logout as apiLogout } from "../../api/auth.api";
+import { signOutFromFirebase } from "../../lib/firebase";
 import "../../styles/dashboard.css";
 
 export default function DashboardLayout() {
@@ -23,6 +24,7 @@ export default function DashboardLayout() {
 
   async function handleLogout() {
     await apiLogout().catch(() => {});
+    await signOutFromFirebase(); // Clear Firebase auth state
     localStorage.clear();
     clearAuth();
     navigate("/login");
