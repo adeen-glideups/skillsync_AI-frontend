@@ -793,3 +793,20 @@
   .landing-footer { padding: 32px 24px; }
   .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
 }
+
+@media (max-width: 600px) {
+  .landing { --ink: #0f0f0f; }
+  .landing-nav { padding: 0 16px; height: 56px; }
+  .nav-logo-text { font-size: 1rem; }
+  .hero { padding: 80px 16px 40px; }
+  .hero-headline { font-size: clamp(1.8rem, 6vw, 3rem); }
+  .hero-subheadline { font-size: 0.95rem; }
+  .section { padding: 60px 16px !important; }
+  .section-title { font-size: 1.8rem; }
+  .pipeline-section { padding: 40px 16px; }
+  .cta-section { padding: 60px 16px; }
+  .cta-title { font-size: clamp(1.8rem, 5vw, 2.5rem); }
+  .landing-footer { padding: 24px 16px; }
+  .landing .upload-zone { padding: 40px 20px; }
+  .footer-stack { justify-content: center; }
+}
