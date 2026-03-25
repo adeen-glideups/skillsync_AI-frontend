@@ -85,7 +85,9 @@ export default function DashJobsPage() {
     <>
       <div className="section-header" style={{ marginBottom: 20 }}>
         <h2 className="section-title">Explore All Jobs</h2>
-        <span style={{ fontSize: "0.82rem", color: "var(--ink-faint)" }}>{jobs.length} jobs available</span>
+        <span style={{ fontSize: "0.82rem", color: "var(--ink-faint)" }}>
+          Showing {jobs.length} {jobs.length === 1 ? "job" : "jobs"}
+        </span>
       </div>
 
       <div className="search-bar">
