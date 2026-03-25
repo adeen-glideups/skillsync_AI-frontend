@@ -111,9 +111,10 @@
 /* mobile hamburger */
 .hamburger {
   display: none; position: fixed; top: 16px; left: 16px;
-  z-index: 100; background: var(--bg-sidebar); border: none;
+  z-index: 200; background: var(--bg-sidebar); border: none;
   width: 40px; height: 40px; border-radius: 8px;
   align-items: center; justify-content: center; cursor: pointer;
+  transition: background 0.3s;
 }
 .hamburger svg { width: 20px; height: 20px; stroke: #fff; }
 
