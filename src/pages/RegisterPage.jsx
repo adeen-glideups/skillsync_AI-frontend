@@ -205,6 +205,12 @@ export default function RegisterPage() {
   }
 
   function handleOtpKeyDown(e, index) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (!loading) handleVerifyOtp();
+      return;
+    }
+
     if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
       otpInputRefs.current[index - 1]?.focus();
     }
