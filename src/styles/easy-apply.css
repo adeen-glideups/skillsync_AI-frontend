@@ -211,6 +211,11 @@
   height: 18px;
   stroke: var(--ink-soft);
 }
+.ea-ai-note {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
 
 /* Fields */
 .ea-field {
