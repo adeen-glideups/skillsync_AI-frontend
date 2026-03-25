@@ -131,6 +131,7 @@
   flex: 1; margin-left: 240px;
   min-height: 100vh;
   display: flex; flex-direction: column;
+  width: 100%; overflow-x: hidden;
 }
 
 /* Top bar */
@@ -146,7 +147,7 @@
 .topbar-greeting { font-size: 0.85rem; color: var(--ink-soft); }
 
 /* Pages */
-.dash-page { padding: 32px; max-width: 1400px; margin: 0 auto; animation: fadeUp 0.35s ease both; }
+.dash-page { padding: 32px; width: 100%; animation: fadeUp 0.35s ease both; }
 
 /* ════════════════════════════
    HOME PAGE
@@ -597,7 +598,7 @@
 @media (max-width: 900px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
-  .dash-main { margin-left: 0; }
+  .dash-main { margin-left: 0; width: 100%; }
   .hamburger { display: flex; }
   .sidebar-overlay.show { display: block; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -608,13 +609,17 @@
   .profile-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .upload-hero { flex-direction: column; }
-  .dash-page { padding: 20px 16px; }
+  .dash-page { padding: 20px 16px; width: 100%; }
   .topbar { padding: 0 16px 0 56px; }
   .filter-row { gap: 12px; padding: 12px; }
   .filter-group { min-width: calc(50% - 8px); }
 }
 
 @media (max-width: 600px) {
+  .dashboard { overflow-x: hidden; }
+  .dash-main { margin-left: 0; width: 100%; overflow-x: hidden; }
+  .dash-page { padding: 16px; width: 100%; }
+  .topbar { padding: 0 12px 0 56px; }
   .stats-grid { grid-template-columns: 1fr; }
   .jobs-grid { grid-template-columns: 1fr; }
   .filter-row { flex-direction: column; gap: 12px; }
