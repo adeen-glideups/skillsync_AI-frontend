@@ -206,6 +206,24 @@
   position: relative;
   z-index: 1;
   animation: fadeIn 0.6s 0.4s ease both;
+
+/* Back link (login/signup -> landing) */
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+.auth-back-link svg {
+  width: 14px;
+  height: 14px;
+}
+.auth-back-link:hover {
+  color: var(--ink);
+}
 }
 
 /* ── Right Panel ── */

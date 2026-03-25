@@ -293,6 +293,13 @@ export default function RegisterPage() {
 
       <main className="auth-right">
         <div className="auth-form-box">
+          <Link to="/" className="auth-back-link" aria-label="Back to landing page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15,18 9,12 15,6" />
+            </svg>
+            Back to home
+          </Link>
+
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progressPct[currentStep] || 100}%` }}></div>
           </div>
