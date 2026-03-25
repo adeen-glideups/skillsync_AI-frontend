@@ -799,7 +799,7 @@
   .landing-nav { padding: 0 16px; height: 56px; }
   .nav-logo-text { font-size: 1rem; }
   .hero { padding: 80px 16px 40px; }
-  .hero-headline { font-size: clamp(1.8rem, 6vw, 3rem); }
+  .hero-headline { font-size: clamp(2.2rem, 8vw, 4.5rem); }
   .hero-subheadline { font-size: 0.95rem; }
   .section { padding: 60px 16px !important; }
   .section-title { font-size: 1.8rem; }
