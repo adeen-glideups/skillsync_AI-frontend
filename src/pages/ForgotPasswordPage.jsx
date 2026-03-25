@@ -1,7 +1,10 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { forgotPasswordRequestOtp, verifyOtp, resetPassword } from "../api/auth.api";
 import "../styles/auth.css";
+
+const OTP_LENGTH = 6;
+const OTP_EXPIRY_SECONDS = 60;
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -11,11 +14,50 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [otpDigits, setOtpDigits] = useState(Array(OTP_LENGTH).fill(""));
+  const [otpExpiresIn, setOtpExpiresIn] = useState(OTP_EXPIRY_SECONDS);
+  const otpInputRefs = useRef([]);
+  const autoVerifyLockRef = useRef(false);
 
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  useEffect(() => {
+    if (step !== 2) return;
+
+    setOtpDigits(Array(OTP_LENGTH).fill(""));
+    setOtpExpiresIn(OTP_EXPIRY_SECONDS);
+    autoVerifyLockRef.current = false;
+
+    const focusTimer = setTimeout(() => {
+      otpInputRefs.current[0]?.focus();
+    }, 100);
+
+    const intervalId = setInterval(() => {
+      setOtpExpiresIn((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => {
+      clearTimeout(focusTimer);
+      clearInterval(intervalId);
+    };
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== 2) return;
+    const otp = otpDigits.join("");
+
+    if (otp.length === OTP_LENGTH && !loading && !autoVerifyLockRef.current) {
+      autoVerifyLockRef.current = true;
+      handleVerifyOtp(otp);
+    }
+
+    if (otp.length < OTP_LENGTH) {
+      autoVerifyLockRef.current = false;
+    }
+  }, [otpDigits, step, loading]);
 
   function toast(msg, type = "default") {
     const container = toastRef.current;
@@ -38,10 +80,6 @@ export default function ForgotPasswordPage() {
       await forgotPasswordRequestOtp(email.trim());
       toast("Reset code sent to your email!", "success");
       setStep(2);
-      setTimeout(() => {
-        const inputs = document.querySelectorAll(".otp-input");
-        if (inputs[0]) inputs[0].focus();
-      }, 100);
     } catch (err) {
       toast(err.message || "Failed to send reset code", "error");
     } finally {
@@ -49,19 +87,49 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  function initOtp(e, index) {
-    const inputs = document.querySelectorAll(".otp-input");
-    if (e.target.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
+  function updateOtpFrom(index, rawValue) {
+    const digits = (rawValue || "").replace(/\D/g, "");
+    if (!digits) {
+      setOtpDigits((prev) => {
+        const next = [...prev];
+        next[index] = "";
+        return next;
+      });
+      return;
+    }
+
+    setOtpDigits((prev) => {
+      const next = [...prev];
+      digits.slice(0, OTP_LENGTH - index).split("").forEach((digit, offset) => {
+        next[index + offset] = digit;
+      });
+      return next;
+    });
+
+    const nextFocusIndex = Math.min(index + digits.length, OTP_LENGTH - 1);
+    otpInputRefs.current[nextFocusIndex]?.focus();
+    otpInputRefs.current[nextFocusIndex]?.select();
+  }
+
+  function handleOtpInput(e, index) {
+    updateOtpFrom(index, e.target.value);
+  }
+
+  function handleOtpPaste(e, index) {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text");
+    updateOtpFrom(index, pasted);
   }
 
   function handleOtpKeyDown(e, index) {
-    const inputs = document.querySelectorAll(".otp-input");
-    if (e.key === "Backspace" && !e.target.value && index > 0) inputs[index - 1].focus();
+    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
   }
 
-  async function handleVerifyOtp() {
-    const otp = [...document.querySelectorAll(".otp-input")].map((i) => i.value).join("");
-    if (otp.length < 6) { toast("Enter all 6 digits", "error"); return; }
+  async function handleVerifyOtp(otpOverride) {
+    const otp = otpOverride || otpDigits.join("");
+    if (otp.length < OTP_LENGTH) { toast("Enter all 6 digits", "error"); return; }
 
     setLoading(true);
     try {
@@ -104,8 +172,14 @@ export default function ForgotPasswordPage() {
   }
 
   async function resendOtp() {
+    if (otpExpiresIn > 0 || loading) return;
+
     try {
       await forgotPasswordRequestOtp(email.trim());
+      setOtpDigits(Array(OTP_LENGTH).fill(""));
+      setOtpExpiresIn(OTP_EXPIRY_SECONDS);
+      autoVerifyLockRef.current = false;
+      otpInputRefs.current[0]?.focus();
       toast("New code sent!", "success");
     } catch { toast("Failed to resend", "error"); }
   }
@@ -173,14 +247,31 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="otp-group">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <input key={i} className="otp-input" maxLength="1" type="text" inputMode="numeric" pattern="[0-9]" onInput={(e) => initOtp(e, i)} onKeyDown={(e) => handleOtpKeyDown(e, i)} />
+              {Array.from({ length: OTP_LENGTH }).map((_, i) => (
+                <input
+                  key={i}
+                  ref={(el) => {
+                    otpInputRefs.current[i] = el;
+                  }}
+                  className="otp-input"
+                  maxLength="6"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={otpDigits[i]}
+                  onInput={(e) => handleOtpInput(e, i)}
+                  onPaste={(e) => handleOtpPaste(e, i)}
+                  onKeyDown={(e) => handleOtpKeyDown(e, i)}
+                  onFocus={(e) => e.target.select()}
+                />
               ))}
             </div>
 
             <div className="otp-footer">
-              <p className="otp-hint">The code expires in <strong>60 seconds</strong></p>
-              <p className="otp-resend">Didn&apos;t get it? <button onClick={resendOtp}>Resend code</button></p>
+              <p className="otp-hint">The code expires in <strong>{otpExpiresIn} seconds</strong></p>
+              <p className="otp-resend">
+                Didn&apos;t get it? <button onClick={resendOtp} disabled={otpExpiresIn > 0 || loading}>Resend code</button>
+              </p>
             </div>
 
             <button className="auth-btn auth-btn-dark" onClick={handleVerifyOtp} disabled={loading}>
