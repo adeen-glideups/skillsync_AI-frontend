@@ -32,7 +32,11 @@
   padding: 0;
   position: fixed; top:0; left:0; bottom:0;
   z-index: 50;
-  transition: transform 0.3s;
+  transition: transform 0.3s, z-index 0.3s;
+}
+
+.sidebar.open {
+  z-index: 150;
 }
 
 .sidebar-logo {
@@ -112,7 +116,6 @@
   align-items: center; justify-content: center; cursor: pointer;
 }
 .hamburger svg { width: 20px; height: 20px; stroke: #fff; }
-.sidebar.open ~ .hamburger { z-index: 200; }
 
 .sidebar-overlay {
   display: none; position: fixed; inset: 0;
