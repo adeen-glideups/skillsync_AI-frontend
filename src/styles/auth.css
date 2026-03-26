@@ -35,6 +35,7 @@
   padding: 48px 52px;
   position: relative;
   overflow: hidden;
+  min-height: 100vh;
 }
 
 /* grid pattern */
@@ -62,9 +63,19 @@
 .auth-left.signup-left::after {
   content: '';
   position: absolute;
-  width: 350px; height: 350px;
-  background: radial-gradient(circle, rgba(26,107,74,0.3) 0%, transparent 70%);
-  top: -60px; left: -60px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(26,107,74,0.25) 0%, transparent 65%);
+  top: -100px; left: -100px;
+  pointer-events: none;
+}
+
+/* green glow blob - signup bottom-right */
+.auth-left.signup-left::before {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(26,107,74,0.15) 0%, transparent 70%);
+  bottom: -80px; right: -100px;
   pointer-events: none;
 }
 
@@ -214,18 +225,26 @@
 .auth-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--ink-soft);
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--ink);
   text-decoration: none;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  width: fit-content;
 }
 .auth-back-link svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
 }
 .auth-back-link:hover {
-  color: var(--ink);
+  color: var(--accent);
+  background: var(--bg-card);
+  transform: translateX(-2px);
 }
 
 /* ── Right Panel ── */
@@ -449,7 +468,8 @@
 }
 
 @media (max-width: 600px) {
-  .auth-right { padding: 24px 20px; }
+  .auth-right { padding: 24px 20px; min-height: 100vh; }
   .auth-form-box { max-width: 100%; }
   .form-title { font-size: 1.5rem; }
+  .auth-page { min-height: 100vh; }
 }
