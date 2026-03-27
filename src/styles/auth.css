@@ -28,13 +28,13 @@
 .auth-left {
   width: 480px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, var(--bg-sidebar) 0%, var(--bg-sidebar) 100%);
+  background: var(--bg-sidebar);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 48px 52px;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   min-height: 100vh;
 }
 
@@ -53,22 +53,20 @@
 .auth-left.login-left::after {
   content: '';
   position: absolute;
-  width: 700px; height: 900px;
-  background: radial-gradient(ellipse at bottom right, rgba(26,107,74,0.3) 0%, rgba(26,107,74,0.1) 50%, transparent 80%);
-  bottom: -200px; right: -150px;
+  width: 1000px; height: 1200px;
+  background: radial-gradient(ellipse at bottom right, rgba(26,107,74,0.4) 0%, rgba(26,107,74,0.15) 40%, transparent 75%);
+  bottom: -400px; right: -300px;
   pointer-events: none;
-  z-index: 0;
 }
 
 /* green glow blob - signup top-left and throughout */
 .auth-left.signup-left::after {
   content: '';
   position: absolute;
-  width: 600px; height: 800px;
-  background: radial-gradient(ellipse at top left, rgba(26,107,74,0.3) 0%, rgba(26,107,74,0.1) 50%, transparent 80%);
-  top: -150px; left: -150px;
+  width: 1000px; height: 1200px;
+  background: radial-gradient(ellipse at top left, rgba(26,107,74,0.4) 0%, rgba(26,107,74,0.15) 40%, transparent 75%);
+  top: -300px; left: -300px;
   pointer-events: none;
-  z-index: 0;
 }
 
 .left-logo {
@@ -461,7 +459,6 @@
   .auth-right { 
     padding: 32px 24px; 
     min-height: 100vh;
-    position: relative;
   }
   .auth-page { 
     min-height: 100vh;
@@ -472,13 +469,10 @@
   .auth-right { 
     padding: 24px 20px; 
     min-height: 100vh;
-    position: relative;
-    background: linear-gradient(180deg, transparent 0%, transparent 70%, rgba(26,107,74,0.08) 100%);
   }
   .auth-form-box { max-width: 100%; }
   .form-title { font-size: 1.5rem; }
   .auth-page { 
     min-height: 100vh;
-    position: relative;
   }
 }
